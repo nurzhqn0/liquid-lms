@@ -13,7 +13,10 @@ const swaggerSpec = {
   tags: [
     { name: "Auth" },
     { name: "Courses" },
-    { name: "Enrollments" }
+    { name: "Enrollments" },
+    { name: "Assignments" },
+    { name: "Submissions" },
+    { name: "Reviews" }
   ],
   components: {
     securitySchemes: {
@@ -54,6 +57,58 @@ const swaggerSpec = {
           course_id: { type: "string" },
           status: { type: "string" },
           completion_percentage: { type: "number" }
+        },
+        additionalProperties: true
+      },
+      Assignment: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          course_id: { type: "string" },
+          lesson_id: { type: "string" },
+          title: { type: "string" },
+          description: { type: "string" },
+          instructions: { type: "array" },
+          max_score: { type: "number" },
+          due_date: { type: "string", format: "date-time" },
+          type: { type: "string" },
+          difficulty: { type: "string" },
+          estimated_time_minutes: { type: "number" },
+          starter_code: { type: "string" },
+          test_cases: { type: "array" },
+          rubric: { type: "array" }
+        },
+        additionalProperties: true
+      },
+      Submission: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          assignment_id: { type: "string" },
+          user_id: { type: "string" },
+          enrollment_id: { type: "string" },
+          submission_date: { type: "string", format: "date-time" },
+          submission_content: { type: "object" },
+          status: { type: "string" },
+          score: { type: "number" },
+          feedback: { type: "string" },
+          graded_by: { type: "string" },
+          graded_date: { type: "string", format: "date-time" },
+          attempt_number: { type: "number" },
+          time_spent_minutes: { type: "number" }
+        },
+        additionalProperties: true
+      },
+      Review: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          course_id: { type: "string" },
+          user_id: { type: "string" },
+          rating: { type: "number" },
+          title: { type: "string" },
+          comment: { type: "string" },
+          review_date: { type: "string", format: "date-time" }
         },
         additionalProperties: true
       },
@@ -289,6 +344,320 @@ const swaggerSpec = {
           },
           "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
           "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/courses/{id}/assignments": {
+      get: {
+        tags: ["Assignments"],
+        summary: "List assignments for a course",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          "200": {
+            description: "Assignments list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    assignments: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Assignment" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { description: "Course not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      },
+      post: {
+        tags: ["Assignments"],
+        summary: "Create assignment (instructor)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Assignment" }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Assignment created",
+            content: { "application/json": { schema: { type: "object", properties: { assignment: { $ref: "#/components/schemas/Assignment" } } } } }
+          },
+          "400": { description: "Bad request", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "404": { description: "Course not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/assignments/{id}": {
+      get: {
+        tags: ["Assignments"],
+        summary: "Get assignment detail",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          "200": {
+            description: "Assignment detail",
+            content: { "application/json": { schema: { type: "object", properties: { assignment: { $ref: "#/components/schemas/Assignment" } } } } }
+          },
+          "404": { description: "Assignment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      },
+      patch: {
+        tags: ["Assignments"],
+        summary: "Update assignment (instructor)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Assignment" }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Assignment updated",
+            content: { "application/json": { schema: { type: "object", properties: { assignment: { $ref: "#/components/schemas/Assignment" } } } } }
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "404": { description: "Assignment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      },
+      delete: {
+        tags: ["Assignments"],
+        summary: "Delete assignment (instructor)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          "200": {
+            description: "Assignment deleted",
+            content: { "application/json": { schema: { type: "object", properties: { ok: { type: "boolean" } } } } }
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "404": { description: "Assignment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/assignments/{id}/submissions": {
+      post: {
+        tags: ["Submissions"],
+        summary: "Create submission (student)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  submission_content: { type: "object" },
+                  attempt_number: { type: "number" },
+                  time_spent_minutes: { type: "number" }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Submission created",
+            content: { "application/json": { schema: { type: "object", properties: { submission: { $ref: "#/components/schemas/Submission" } } } } }
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "404": { description: "Assignment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      },
+      get: {
+        tags: ["Submissions"],
+        summary: "List submissions for assignment (instructor)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          "200": {
+            description: "Submissions list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    submissions: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Submission" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "404": { description: "Assignment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/submissions/me": {
+      get: {
+        tags: ["Submissions"],
+        summary: "List my submissions (student)",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "My submissions",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    submissions: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Submission" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/submissions/{id}": {
+      patch: {
+        tags: ["Submissions"],
+        summary: "Grade submission (instructor)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  status: { type: "string" },
+                  score: { type: "number" },
+                  feedback: { type: "string" }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Submission updated",
+            content: { "application/json": { schema: { type: "object", properties: { submission: { $ref: "#/components/schemas/Submission" } } } } }
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "404": { description: "Submission not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/courses/{id}/reviews": {
+      get: {
+        tags: ["Reviews"],
+        summary: "List reviews for a course",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          "200": {
+            description: "Reviews list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    reviews: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Review" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { description: "Course not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      },
+      post: {
+        tags: ["Reviews"],
+        summary: "Create review (student)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  rating: { type: "number" },
+                  title: { type: "string" },
+                  comment: { type: "string" }
+                },
+                required: ["rating"]
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Review created",
+            content: { "application/json": { schema: { type: "object", properties: { review: { $ref: "#/components/schemas/Review" } } } } }
+          },
+          "400": { description: "Bad request", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "404": { description: "Course not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/reviews/{id}": {
+      delete: {
+        tags: ["Reviews"],
+        summary: "Delete review (owner or instructor)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          "200": {
+            description: "Review deleted",
+            content: { "application/json": { schema: { type: "object", properties: { ok: { type: "boolean" } } } } }
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "404": { description: "Review not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
         }
       }
     }
