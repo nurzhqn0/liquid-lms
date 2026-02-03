@@ -8,6 +8,9 @@ const { connectDb } = require("./db");
 const authRoutes = require("./routes/auth");
 const courseRoutes = require("./routes/courses");
 const enrollmentRoutes = require("./routes/enrollments");
+const assignmentRoutes = require("./routes/assignments");
+const submissionRoutes = require("./routes/submissions");
+const reviewRoutes = require("./routes/reviews");
 const errorHandler = require("./middleware/error");
 
 const app = express();
@@ -57,6 +60,9 @@ app.get("/api/docs.json", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
+app.use("/api", assignmentRoutes);
+app.use("/api", submissionRoutes);
+app.use("/api", reviewRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
