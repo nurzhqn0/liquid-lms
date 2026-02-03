@@ -102,6 +102,52 @@ const swaggerSpec = {
         }
       }
     },
+    "/api/auth/register": {
+      post: {
+        tags: ["Auth"],
+        summary: "Register a new user",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  username: { type: "string" },
+                  email: { type: "string" },
+                  password: { type: "string" },
+                  first_name: { type: "string" },
+                  last_name: { type: "string" },
+                  role: { type: "string", enum: ["student", "instructor"] }
+                },
+                required: ["username", "email", "password"]
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "User created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { user: { $ref: "#/components/schemas/User" } }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Bad request",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+          "409": {
+            description: "User already exists",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
     "/api/auth/logout": {
       post: {
         tags: ["Auth"],
