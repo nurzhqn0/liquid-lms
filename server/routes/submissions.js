@@ -12,6 +12,20 @@ function isValidObjectId(value) {
   return mongoose.Types.ObjectId.isValid(value);
 }
 
+async function recomputeAssignmentStats(assignmentId) {
+  const assignmentObjectId = new mongoose.Types.ObjectId(assignmentId);
+  const submissionsCount = await Submission.countDocuments({ assignment_id: assignmentObjectId });
+  const avgAgg = await Submission.aggregate([
+    { $match: { assignment_id: assignmentObjectId, score: { $type: "number" } } },
+    { $group: { _id: null, average_score: { $avg: "$score" } } }
+  ]);
+  const averageScore = avgAgg.length ? avgAgg[0].average_score : 0;
+  await Assignment.updateOne(
+    { _id: assignmentObjectId },
+    { $set: { submissions_count: submissionsCount, average_score: averageScore } }
+  );
+}
+
 router.post("/assignments/:id/submissions", auth, requireRole("student"), async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -41,6 +55,7 @@ router.post("/assignments/:id/submissions", auth, requireRole("student"), async 
     };
 
     const submission = await Submission.create(payload);
+    await recomputeAssignmentStats(assignment._id);
     return res.status(201).json({ submission });
   } catch (err) {
     return next(err);
@@ -96,6 +111,9 @@ router.patch("/submissions/:id", auth, requireRole("instructor"), async (req, re
     const submission = await Submission.findByIdAndUpdate(id, updates, { new: true }).lean();
     if (!submission) {
       return res.status(404).json({ error: "Submission not found" });
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, "score")) {
+      await recomputeAssignmentStats(submission.assignment_id);
     }
     return res.json({ submission });
   } catch (err) {

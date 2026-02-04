@@ -76,7 +76,9 @@ const swaggerSpec = {
           estimated_time_minutes: { type: "number" },
           starter_code: { type: "string" },
           test_cases: { type: "array" },
-          rubric: { type: "array" }
+          rubric: { type: "array" },
+          submissions_count: { type: "number" },
+          average_score: { type: "number" }
         },
         additionalProperties: true
       },

@@ -14,7 +14,9 @@ const assignmentSchema = new mongoose.Schema(
     estimated_time_minutes: { type: Number },
     starter_code: { type: String },
     test_cases: { type: Array },
-    rubric: { type: Array }
+    rubric: { type: Array },
+    submissions_count: { type: Number, default: 0 },
+    average_score: { type: Number, default: 0 }
   },
   {
     timestamps: false,
