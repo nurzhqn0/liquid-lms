@@ -74,7 +74,12 @@ const swaggerSpec = {
           _id: { type: "string" },
           user_id: { type: "string" },
           course_id: { type: "string" },
+          course_title: { type: "string" },
+          instructor_name: { type: "string" },
           status: { type: "string" },
+          payment_status: { type: "string" },
+          amount_paid: { type: "number" },
+          payment_method: { type: "string" },
           completion_percentage: { type: "number" }
         },
         additionalProperties: true
@@ -126,10 +131,18 @@ const swaggerSpec = {
           _id: { type: "string" },
           course_id: { type: "string" },
           user_id: { type: "string" },
+          user_name: { type: "string" },
+          user_avatar: { type: "string" },
           rating: { type: "number" },
           title: { type: "string" },
           comment: { type: "string" },
-          review_date: { type: "string", format: "date-time" }
+          review_date: { type: "string", format: "date-time" },
+          verified_purchase: { type: "boolean" },
+          completion_status: { type: "string" },
+          completion_percentage: { type: "number" },
+          helpful_count: { type: "number" },
+          reported: { type: "boolean" },
+          instructor_response: { type: "object" }
         },
         additionalProperties: true
       },

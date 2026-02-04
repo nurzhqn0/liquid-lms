@@ -155,12 +155,16 @@ router.post("/:id/enroll", auth, requireRole("student"), async (req, res, next) 
     }
 
     const enrollment = await Enrollment.create({
+      ...req.body,
       user_id: req.user._id,
       course_id: id,
+      course_title: course.title,
+      instructor_name: course.instructor_name,
       status: "active",
-      completion_percentage: 0,
-      progress: [],
-      enrollment_date: new Date()
+      completion_percentage: req.body?.completion_percentage ?? 0,
+      progress: Array.isArray(req.body?.progress) ? req.body.progress : [],
+      enrollment_date: new Date(),
+      last_accessed: new Date()
     });
 
     await updateCourseEnrollmentStats(id);
