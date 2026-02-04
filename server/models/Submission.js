@@ -4,6 +4,8 @@ const submissionSchema = new mongoose.Schema(
   {
     assignment_id: { type: mongoose.Schema.Types.ObjectId, required: true },
     user_id: { type: mongoose.Schema.Types.ObjectId, required: true },
+    user_name: { type: String },
+    user_avatar: { type: String },
     enrollment_id: { type: mongoose.Schema.Types.ObjectId },
     submission_date: { type: Date },
     submission_content: { type: Object },
