@@ -4,6 +4,7 @@ const Review = require("../models/Review");
 const Course = require("../models/Course");
 const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
+const { updateCourseRatings } = require("../utils/courseStats");
 
 const router = express.Router();
 
@@ -50,6 +51,7 @@ router.post("/courses/:id/reviews", auth, requireRole("student"), async (req, re
       review_date: new Date()
     });
 
+    await updateCourseRatings(id);
     return res.status(201).json({ review });
   } catch (err) {
     return next(err);
@@ -75,6 +77,7 @@ router.delete("/reviews/:id", auth, async (req, res, next) => {
     }
 
     await Review.deleteOne({ _id: id });
+    await updateCourseRatings(review.course_id);
     return res.json({ ok: true });
   } catch (err) {
     return next(err);

@@ -45,7 +45,26 @@ const swaggerSpec = {
           title: { type: "string" },
           slug: { type: "string" },
           description: { type: "string" },
-          modules: { type: "array" }
+          instructor_id: { type: "string" },
+          instructor_name: { type: "string" },
+          instructor_avatar: { type: "string" },
+          category: { type: "string" },
+          subcategory: { type: "string" },
+          level: { type: "string" },
+          language: { type: "string" },
+          price: { type: "number" },
+          currency: { type: "string" },
+          thumbnail: { type: "string" },
+          preview_video: { type: "string" },
+          created_at: { type: "string", format: "date-time" },
+          updated_at: { type: "string", format: "date-time" },
+          is_published: { type: "boolean" },
+          learning_objectives: { type: "array", items: { type: "string" } },
+          requirements: { type: "array", items: { type: "string" } },
+          modules: { type: "array" },
+          statistics: { type: "object" },
+          ratings: { type: "object" },
+          tags: { type: "array", items: { type: "string" } }
         },
         additionalProperties: true
       },
@@ -260,6 +279,29 @@ const swaggerSpec = {
             }
           }
         }
+      },
+      post: {
+        tags: ["Courses"],
+        summary: "Create course (instructor)",
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Course" }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Course created",
+            content: { "application/json": { schema: { type: "object", properties: { course: { $ref: "#/components/schemas/Course" } } } } }
+          },
+          "400": { description: "Bad request", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "409": { description: "Course already exists", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
       }
     },
     "/api/courses/{id}": {
@@ -281,6 +323,30 @@ const swaggerSpec = {
               }
             }
           },
+          "404": { description: "Course not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+        }
+      },
+      patch: {
+        tags: ["Courses"],
+        summary: "Update course (instructor)",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Course" }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Course updated",
+            content: { "application/json": { schema: { type: "object", properties: { course: { $ref: "#/components/schemas/Course" } } } } }
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
           "404": { description: "Course not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
         }
       }
