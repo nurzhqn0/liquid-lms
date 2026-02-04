@@ -16,14 +16,6 @@ export default function CoursesPage() {
   const [level, setLevel] = useState("all");
   const [category, setCategory] = useState("all");
 
-  if (isLoading) {
-    return <div>Loading courses...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-600">{error.message}</div>;
-  }
-
   const courses = data?.courses || [];
 
   const levels = useMemo(() => {
@@ -50,6 +42,14 @@ export default function CoursesPage() {
       return matchesLevel && matchesCategory && matchesQuery;
     });
   }, [courses, search, level, category]);
+
+  if (isLoading) {
+    return <div>Loading courses...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-600">{error.message}</div>;
+  }
 
   return (
     <div className="space-y-6">
