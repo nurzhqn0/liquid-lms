@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const Assignment = require("../models/Assignment");
 const Enrollment = require("../models/Enrollment");
 const Submission = require("../models/Submission");
+const User = require("../models/User");
 const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
 
@@ -43,9 +44,16 @@ router.post("/assignments/:id/submissions", auth, requireRole("student"), async 
       course_id: assignment.course_id
     }).lean();
 
+    const userName =
+      req.user.first_name || req.user.last_name
+        ? [req.user.first_name, req.user.last_name].filter(Boolean).join(" ")
+        : req.user.username;
+
     const payload = {
       assignment_id: id,
       user_id: req.user._id,
+      user_name: userName,
+      user_avatar: req.user.profile_picture,
       enrollment_id: enrollment ? enrollment._id : undefined,
       submission_date: new Date(),
       submission_content: req.body?.submission_content,
@@ -72,6 +80,35 @@ router.get("/assignments/:id/submissions", auth, requireRole("instructor"), asyn
     const submissions = await Submission.find({ assignment_id: id })
       .sort({ submission_date: -1 })
       .lean();
+
+    const missingUserIds = submissions
+      .filter((submission) => !submission.user_name)
+      .map((submission) => submission.user_id)
+      .filter(Boolean);
+
+    if (missingUserIds.length) {
+      const users = await User.find({ _id: { $in: missingUserIds } }).lean();
+      const userMap = users.reduce((acc, user) => {
+        const name =
+          user.first_name || user.last_name
+            ? [user.first_name, user.last_name].filter(Boolean).join(" ")
+            : user.username;
+        acc[String(user._id)] = {
+          user_name: name,
+          user_avatar: user.profile_picture
+        };
+        return acc;
+      }, {});
+
+      submissions.forEach((submission) => {
+        const meta = userMap[String(submission.user_id)];
+        if (meta) {
+          submission.user_name = meta.user_name;
+          submission.user_avatar = meta.user_avatar;
+        }
+      });
+    }
+
     return res.json({ submissions });
   } catch (err) {
     return next(err);
