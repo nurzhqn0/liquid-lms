@@ -47,6 +47,8 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
+    await User.updateOne({ _id: user._id }, { $set: { last_login: new Date() } });
+
     const token = jwt.sign({ sub: user._id.toString(), role: user.role }, env.jwtSecret, {
       expiresIn: env.jwtExpiresIn
     });

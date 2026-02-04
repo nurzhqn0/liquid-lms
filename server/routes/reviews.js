@@ -2,8 +2,10 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Review = require("../models/Review");
 const Course = require("../models/Course");
+const Enrollment = require("../models/Enrollment");
 const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
+const { updateCourseRatings } = require("../utils/courseStats");
 
 const router = express.Router();
 
@@ -36,20 +38,35 @@ router.post("/courses/:id/reviews", auth, requireRole("student"), async (req, re
       return res.status(404).json({ error: "Course not found" });
     }
 
-    const { rating, title, comment } = req.body || {};
+    const { rating, title, comment, completion_status, completion_percentage } = req.body || {};
     if (rating === undefined) {
       return res.status(400).json({ error: "Rating is required" });
     }
 
+    const enrollment = await Enrollment.findOne({
+      user_id: req.user._id,
+      course_id: id
+    }).lean();
+
     const review = await Review.create({
       course_id: id,
       user_id: req.user._id,
+      user_name:
+        req.user.first_name || req.user.last_name
+          ? [req.user.first_name, req.user.last_name].filter(Boolean).join(" ")
+          : req.user.username,
+      user_avatar: req.user.profile_picture,
       rating,
       title,
       comment,
-      review_date: new Date()
+      review_date: new Date(),
+      verified_purchase: Boolean(enrollment),
+      completion_status: completion_status || enrollment?.status,
+      completion_percentage:
+        completion_percentage !== undefined ? completion_percentage : enrollment?.completion_percentage
     });
 
+    await updateCourseRatings(id);
     return res.status(201).json({ review });
   } catch (err) {
     return next(err);
@@ -75,6 +92,7 @@ router.delete("/reviews/:id", auth, async (req, res, next) => {
     }
 
     await Review.deleteOne({ _id: id });
+    await updateCourseRatings(review.course_id);
     return res.json({ ok: true });
   } catch (err) {
     return next(err);
