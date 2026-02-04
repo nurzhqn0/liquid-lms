@@ -112,6 +112,11 @@ export default function CoursesPage() {
             No courses match your filters.
           </div>
         )}
+        {courses.length === 0 && (
+          <div className="rounded-3xl border border-ink/10 bg-white/80 p-6 text-sm text-ink/60">
+            No courses available yet.
+          </div>
+        )}
       </div>
     </div>
   );

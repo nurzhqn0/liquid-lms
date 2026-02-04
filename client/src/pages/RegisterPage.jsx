@@ -28,9 +28,13 @@ export default function RegisterPage() {
     event.preventDefault();
     setSubmitting(true);
     try {
-      await register(form);
+      const newUser = await register(form);
       toast({ title: "Account created", description: "Welcome to Liquid LMS." });
-      navigate("/courses");
+      if (newUser?.role === "instructor") {
+        navigate("/instructor/courses");
+      } else {
+        navigate("/courses");
+      }
     } catch (err) {
       toast({ title: "Registration failed", description: err.message, variant: "error" });
     } finally {

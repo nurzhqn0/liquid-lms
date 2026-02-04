@@ -18,9 +18,11 @@ export default function LoginPage() {
     event.preventDefault();
     setSubmitting(true);
     try {
-      await login(identifier, password);
+      const loggedInUser = await login(identifier, password);
       toast({ title: "Welcome back!", description: "Logged in successfully." });
-      const redirectTo = location.state?.from?.pathname || "/courses";
+      const fallback =
+        loggedInUser?.role === "instructor" ? "/instructor/courses" : "/courses";
+      const redirectTo = location.state?.from?.pathname || fallback;
       navigate(redirectTo);
     } catch (err) {
       toast({ title: "Login failed", description: err.message, variant: "error" });
