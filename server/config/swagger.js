@@ -155,7 +155,7 @@ const swaggerSpec = {
     }
   },
   paths: {
-    "/api/auth/login": {
+    "/auth/login": {
       post: {
         tags: ["Auth"],
         summary: "Login with email or username",
@@ -191,7 +191,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/auth/register": {
+    "/auth/register": {
       post: {
         tags: ["Auth"],
         summary: "Register a new user",
@@ -237,7 +237,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/auth/logout": {
+    "/auth/logout": {
       post: {
         tags: ["Auth"],
         summary: "Logout and clear auth cookie",
@@ -249,7 +249,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/auth/me": {
+    "/auth/me": {
       get: {
         tags: ["Auth"],
         summary: "Get current user",
@@ -270,7 +270,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/courses": {
+    "/courses": {
       get: {
         tags: ["Courses"],
         summary: "List courses",
@@ -317,7 +317,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/courses/{id}": {
+    "/courses/{id}": {
       get: {
         tags: ["Courses"],
         summary: "Get course detail",
@@ -364,7 +364,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/courses/{id}/enroll": {
+    "/courses/{id}/enroll": {
       post: {
         tags: ["Enrollments"],
         summary: "Enroll in a course",
@@ -401,7 +401,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/enrollments/me": {
+    "/enrollments/me": {
       get: {
         tags: ["Enrollments"],
         summary: "List my enrollments",
@@ -428,7 +428,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/courses/{id}/assignments": {
+    "/courses/{id}/assignments": {
       get: {
         tags: ["Assignments"],
         summary: "List assignments for a course",
@@ -482,7 +482,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/assignments/{id}": {
+    "/assignments/{id}": {
       get: {
         tags: ["Assignments"],
         summary: "Get assignment detail",
@@ -539,7 +539,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/assignments/{id}/submissions": {
+    "/assignments/{id}/submissions": {
       post: {
         tags: ["Submissions"],
         summary: "Create submission (student)",
@@ -601,7 +601,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/submissions/me": {
+    "/submissions/me": {
       get: {
         tags: ["Submissions"],
         summary: "List my submissions (student)",
@@ -628,7 +628,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/submissions/{id}": {
+    "/submissions/{id}": {
       patch: {
         tags: ["Submissions"],
         summary: "Grade submission (instructor)",
@@ -661,7 +661,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/courses/{id}/reviews": {
+    "/courses/{id}/reviews": {
       get: {
         tags: ["Reviews"],
         summary: "List reviews for a course",
@@ -723,7 +723,7 @@ const swaggerSpec = {
         }
       }
     },
-    "/api/reviews/{id}": {
+    "/reviews/{id}": {
       delete: {
         tags: ["Reviews"],
         summary: "Delete review (owner or instructor)",
