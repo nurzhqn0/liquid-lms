@@ -44,25 +44,27 @@ app.use(
       }
       return callback(null, false);
     },
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
+
+const head = "";
 
 app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get("/api/docs.json", (req, res) => {
+app.use(`${head}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get(`${head}/docs.json`, (req, res) => {
   res.json(swaggerSpec);
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/courses", courseRoutes);
-app.use("/api/enrollments", enrollmentRoutes);
-app.use("/api", assignmentRoutes);
-app.use("/api", submissionRoutes);
-app.use("/api", reviewRoutes);
+app.use(`${head}/auth`, authRoutes);
+app.use(`${head}/courses`, courseRoutes);
+app.use(`${head}/enrollments`, enrollmentRoutes);
+app.use(`${head}`, assignmentRoutes);
+app.use(`${head}`, submissionRoutes);
+app.use(`${head}`, reviewRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
