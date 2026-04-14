@@ -161,7 +161,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "(100 * sum(rate(liquid_lms_business_operations_total{operation=\"enrollment\",outcome=\"success\"}[$__rate_interval])) / clamp_min(sum(rate(liquid_lms_business_operations_total{operation=\"enrollment\"}[$__rate_interval])), 1)) or on() vector(0)",
+          "expr": "(100 * sum(increase(liquid_lms_business_operations_total{operation=\"enrollment\",outcome=\"success\"}[$__range])) / clamp_min(sum(increase(liquid_lms_business_operations_total{operation=\"enrollment\"}[$__range])), 1)) or on() vector(0)",
           "legendFormat": "enrollment",
           "range": true,
           "refId": "A"
@@ -227,13 +227,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "(100 * sum(rate(liquid_lms_http_request_duration_seconds_bucket{method=\"POST\",route=\"/assignments/:id/submissions\",status=~\"2..\",le=\"2\"}[$__rate_interval])) / clamp_min(sum(rate(liquid_lms_http_request_duration_seconds_count{method=\"POST\",route=\"/assignments/:id/submissions\",status=~\"2..\"}[$__rate_interval])), 1)) or on() vector(0)",
-          "legendFormat": "submission_lt_2s",
+          "expr": "(100 * sum(increase(liquid_lms_http_request_duration_seconds_bucket{method=\"POST\",route=\"/assignments/:id/submissions\",status=~\"2..\",le=\"1.0\"}[$__range])) / clamp_min(sum(increase(liquid_lms_http_request_duration_seconds_count{method=\"POST\",route=\"/assignments/:id/submissions\",status=~\"2..\"}[$__range])), 1)) or on() vector(0)",
+          "legendFormat": "submission_lt_1s",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Submission Latency SLI",
+      "title": "Submission Latency SLI (<1s)",
       "type": "stat"
     },
     {
@@ -293,7 +293,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "(100 * sum(rate(liquid_lms_http_requests_total{status=~\"5..\"}[$__rate_interval])) / clamp_min(sum(rate(liquid_lms_http_requests_total[$__rate_interval])), 1)) or on() vector(0)",
+          "expr": "(100 * sum(rate(liquid_lms_http_requests_total{status=~\"5..\"}[$__rate_interval])) / clamp_min(sum(rate(liquid_lms_http_requests_total[$__rate_interval])), 0.000001)) or on() vector(0)",
           "legendFormat": "5xx_error_ratio",
           "range": true,
           "refId": "A"

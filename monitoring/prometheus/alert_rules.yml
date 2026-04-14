@@ -2,13 +2,13 @@ groups:
   - name: liquid-lms-alerts
     rules:
       - alert: LiquidLMSHighSubmissionLatency
-        expr: histogram_quantile(0.95, sum by (le) (rate(liquid_lms_http_request_duration_seconds_bucket{method="POST",route="/assignments/:id/submissions",status=~"2.."}[5m]))) > 2
+        expr: histogram_quantile(0.95, sum by (le) (rate(liquid_lms_http_request_duration_seconds_bucket{method="POST",route="/assignments/:id/submissions",status=~"2.."}[5m]))) > 1
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "Assignment submission latency is above target"
-          description: "The p95 latency for POST /assignments/:id/submissions has been above 2 seconds for 5 minutes."
+          description: "The p95 latency for POST /assignments/:id/submissions has been above 1 second for 5 minutes."
 
       - alert: LiquidLMSBackendDown
         expr: up{job="backend"} == 0

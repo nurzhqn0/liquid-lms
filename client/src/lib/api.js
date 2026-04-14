@@ -2,7 +2,12 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:4000").
 
 export async function apiFetch(path, options = {}) {
   const pathWithSlash = path.startsWith("/") ? path : `/${path}`;
-  const url = path.startsWith("http") ? path : `${BASE_URL}${pathWithSlash}`;
+  const normalizedPath = path.startsWith("http")
+    ? path
+    : pathWithSlash.startsWith("/api/")
+      ? pathWithSlash.slice(4)
+      : pathWithSlash;
+  const url = path.startsWith("http") ? path : `${BASE_URL}${normalizedPath}`;
   const headers = {
     ...(options.headers || {}),
     "Content-Type": "application/json"

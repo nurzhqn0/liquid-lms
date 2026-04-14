@@ -67,6 +67,20 @@ docker compose build
 docker compose up -d
 ```
 
+Stop and remove:
+
+```bash
+docker compose down
+```
+
+Rebuild from scratch:
+
+```bash
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
 Default published ports:
 
 - Frontend: `8080`
@@ -90,6 +104,12 @@ curl -s http://127.0.0.1:4000/metrics
 curl -s http://127.0.0.1:8080/api/health
 curl -s http://127.0.0.1:9091/api/v1/targets
 curl -s http://admin:admin@127.0.0.1:3001/api/search
+```
+
+Restart observability services after dashboard or alert changes:
+
+```bash
+docker compose restart prometheus grafana
 ```
 
 ## Docker Swarm
@@ -119,6 +139,20 @@ Remove:
 
 ```bash
 docker stack rm liquid-lms
+```
+
+If Compose was running before Swarm deploy:
+
+```bash
+docker compose down
+docker stack deploy -c docker-stack.yml liquid-lms
+```
+
+If Swarm was running before Compose:
+
+```bash
+docker stack rm liquid-lms
+docker compose up -d
 ```
 
 Note:
@@ -155,7 +189,7 @@ Implemented alerts:
 
 - `LiquidLMSHighSubmissionLatency`
   - warning
-  - triggers when p95 submission latency stays above 2 seconds for 5 minutes
+  - triggers when p95 submission latency stays above 1 second for 5 minutes
 - `LiquidLMSBackendDown`
   - critical
   - triggers when the backend target is down for 1 minute
@@ -174,6 +208,46 @@ For Swarm:
 docker service scale liquid-lms_backend=0
 curl -s http://127.0.0.1:9091/api/v1/alerts
 docker service scale liquid-lms_backend=2
+```
+
+## Useful Commands
+
+Generate demo traffic for Grafana panels:
+
+```bash
+./scripts/generate_dashboard_data.sh
+```
+
+Generate more traffic:
+
+```bash
+REQUEST_COUNT=10 ./scripts/generate_dashboard_data.sh
+```
+
+Run all repo and live-stack checks:
+
+```bash
+./scripts/check_all.sh
+```
+
+Validate Compose file only:
+
+```bash
+docker compose config --quiet
+```
+
+See live backend metrics:
+
+```bash
+curl -s http://127.0.0.1:4000/metrics | less
+```
+
+Query Prometheus directly:
+
+```bash
+curl -s http://127.0.0.1:9091/api/v1/targets
+curl -s http://127.0.0.1:9091/api/v1/rules
+curl -s http://127.0.0.1:9091/api/v1/alerts
 ```
 
 ## Environment
