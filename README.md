@@ -85,8 +85,8 @@ Default published ports:
 
 - Frontend: `8080`
 - Backend: `4000`
-- Prometheus: `9090`
-- Grafana: `3000`
+- Prometheus: `127.0.0.1:9090`
+- Grafana: `127.0.0.1:3000`
 - Node Exporter: `9100`
 
 If `3000` or `9090` are already in use locally, override them when starting the stack:
@@ -105,6 +105,54 @@ curl -s http://127.0.0.1:8080/api/health
 curl -s http://127.0.0.1:9091/api/v1/targets
 curl -s http://admin:admin@127.0.0.1:3001/api/search
 ```
+
+## Private Observability Access
+
+Prometheus and Grafana should not be exposed publicly on a server.
+
+### Docker Compose
+
+In `docker-compose.yml`, Prometheus and Grafana are bound to `127.0.0.1`, so they are only reachable from the server itself:
+
+- Prometheus: `127.0.0.1:9090`
+- Grafana: `127.0.0.1:3000`
+
+Access them through an SSH tunnel from your local machine:
+
+```bash
+./scripts/open_observability_tunnel.sh root@YOUR_SERVER_IP 3000 9090
+```
+
+Then open locally:
+
+- Grafana: `http://127.0.0.1:3001`
+- Prometheus: `http://127.0.0.1:9091`
+
+### Docker Swarm
+
+Docker Swarm published ports do not support the same localhost-only binding pattern as Compose. For Swarm, keep Grafana and Prometheus private by firewalling the published ports and then tunnel in over SSH.
+
+Apply the Ubuntu firewall rules on the server:
+
+```bash
+sudo ./scripts/lock_down_observability_ufw.sh
+```
+
+This blocks public access to:
+
+- Grafana: `3001`
+- Prometheus: `9091`
+
+Then open an SSH tunnel from your local machine:
+
+```bash
+./scripts/open_observability_tunnel.sh root@YOUR_SERVER_IP 3001 9091
+```
+
+Then access locally:
+
+- Grafana: `http://127.0.0.1:3001`
+- Prometheus: `http://127.0.0.1:9091`
 
 Restart observability services after dashboard or alert changes:
 
