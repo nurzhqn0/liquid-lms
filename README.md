@@ -1,177 +1,211 @@
-# **Final Project Report — Liquid LMS**
+# Liquid LMS
 
-### **Student**
+Liquid LMS is a full-stack learning management system built with:
 
-Name: Nurzhan Izimbetov
+- Frontend: React + Vite + Tailwind
+- Backend: Node.js + Express
+- Database: MongoDB
+- Observability: Prometheus + Grafana + Node Exporter
 
-GitHub: nurzhqn0
+This repository is structured for the SRE/observability midterm: the app can run with Docker Compose, and a Swarm stack file is included for the bonus deployment.
 
-Project: Liquid LMS
+## Repository Layout
 
-Link: [https://cute-olive-5e9.notion.site/Endterm-2fc680ce2e2780abadb7ecf40320c599?source=copy_link](https://www.notion.so/Endterm-2fc680ce2e2780abadb7ecf40320c599?pvs=21)
+```text
+.
+├── backend/                 # Express API, Mongo models, auth, metrics
+│   ├── Dockerfile
+│   ├── package.json
+│   └── server/
+├── client/                  # React application source + frontend container files
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── src/
+├── monitoring/
+│   ├── grafana/
+│   └── prometheus/
+├── docker-compose.yml
+└── docker-stack.yml
+```
 
----
+## App Services
 
-### **1. Abstract**
+- `frontend`: Nginx serving the built React app and proxying `/api/*` to the backend
+- `backend`: Express API on port `4000`
+- `mongo`: MongoDB for application data
+- `prometheus`: metrics scraping and alert evaluation
+- `grafana`: dashboards
+- `node-exporter`: host/system metrics
 
-Liquid LMS is a full‑stack Learning Management System (LMS) MVP designed to support instructor‑led course creation and student learning workflows. The system provides course modules, assignments, submissions, grading, reviews, and enrollment tracking. The project demonstrates a complete backend (Node.js + Express + MongoDB) and a responsive frontend (React + Vite + Tailwind + shadcn‑style UI), deployed to cloud platforms.
+## Backend Observability
 
-### **2. Problem Statement**
+The backend exposes:
 
-Traditional LMS platforms are often complex and slow to customize. This project builds a clean, focused LMS MVP that supports the core academic flows—creating courses and lessons, enrolling students, handling assignments, grading, and collecting reviews—with a modern UI and scalable data model.
+- `GET /health`
+  - readiness-style health check
+  - returns `200` only when MongoDB is connected
+  - returns JSON with service and database status
+- `GET /metrics`
+  - Prometheus metrics endpoint
+  - includes default Node.js metrics
+  - includes HTTP request totals and latency histograms
+  - includes LMS business metrics for:
+    - enrollment operations
+    - assignment submission operations
 
-### **3. Objectives**
+Tracked SLI-related operations:
 
-- Build a functional LMS MVP with real CRUD workflows.
-- Support student and instructor roles.
-- Provide clean REST APIs with authentication.
-- Deliver a responsive UI for both roles.
-- Deploy and validate in production.
+- `POST /courses/:id/enroll`
+- `POST /assignments/:id/submissions`
 
-### **4. Scope**
+## Docker Compose
 
-Included:
+Build and run:
 
-- Auth: register, login, logout, current user
-- Courses: list, detail, create/edit (instructor)
-- Lessons: embedded within course modules
-- Enrollments: enroll, unenroll, list my enrollments
-- Assignments: create/edit/delete, list by course
-- Submissions: create, list, grade
-- Reviews: list and create
-- Swagger API docs
-- Deployment to Railway / DigitalOcean
+```bash
+docker compose build
+docker compose up -d
+```
 
-Excluded:
+Default published ports:
 
-- Payments, certificates, analytics dashboard
-- File uploads
-- Email notifications
-- Discussion boards
+- Frontend: `8080`
+- Backend: `4000`
+- Prometheus: `9090`
+- Grafana: `3000`
+- Node Exporter: `9100`
 
-### **5. System Architecture**
+If `3000` or `9090` are already in use locally, override them when starting the stack:
 
-Backend:
+```bash
+PROMETHEUS_PORT=9091 GRAFANA_PORT=3001 docker compose up -d
+```
 
-- Node.js + Express
-- MongoDB + Mongoose
-- JWT auth stored in HttpOnly cookies
+Useful checks:
 
-Frontend:
+```bash
+docker compose ps
+curl -s http://127.0.0.1:4000/health
+curl -s http://127.0.0.1:4000/metrics
+curl -s http://127.0.0.1:8080/api/health
+curl -s http://127.0.0.1:9091/api/v1/targets
+curl -s http://admin:admin@127.0.0.1:3001/api/search
+```
 
-- React + Vite
-- Tailwind CSS (shadcn‑style components)
-- React Router + React Query
+## Docker Swarm
 
-Deployment:
+The Swarm manifest is in [docker-stack.yml](/Users/myrzanizimbetov/Desktop/liquid-lms/docker-stack.yml).
 
-- DigitalOcean App Platform
+Current replica targets:
 
-### **6. Data Model Highlights**
+- `frontend`: `2`
+- `backend`: `2`
+- `node-exporter`: global
 
-- `users`: username, email, role, preferences, stats
-- `courses`: modules/lessons embedded, metadata, statistics, ratings
-- `enrollments`: progress, completion, notes, bookmarks
-- `assignments`: rubric, test cases, avg score, submissions count
-- `submissions`: grading, feedback, time spent
-- `reviews`: rating, verified purchase, instructor response
+Deploy:
 
-### **7. Backend API Summary**
+```bash
+docker stack deploy -c docker-stack.yml liquid-lms
+```
 
-**Auth**
+Inspect:
 
-- `POST /api/auth/login`
-- `POST /api/auth/register`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
+```bash
+docker stack services liquid-lms
+docker stack ps liquid-lms
+```
 
-**Courses**
+Remove:
 
-- `GET /api/courses`
-- `GET /api/courses/:id`
-- `POST /api/courses`
-- `PATCH /api/courses/:id`
+```bash
+docker stack rm liquid-lms
+```
 
-**Enrollments**
+Note:
 
-- `POST /api/courses/:id/enroll`
-- `DELETE /api/courses/:id/enroll`
-- `GET /api/enrollments/me`
+- The current Swarm file uses `3001` for Grafana and `9091` for Prometheus to avoid common local port conflicts.
+- The monitoring mounts in the Swarm file are absolute paths for reliable local deployment on this machine.
 
-**Assignments**
+## Grafana and Prometheus
 
-- `GET /api/courses/:id/assignments`
-- `POST /api/courses/:id/assignments`
-- `GET /api/assignments/:id`
-- `PATCH /api/assignments/:id`
-- `DELETE /api/assignments/:id`
+Prometheus config:
 
-**Submissions**
+- [monitoring/prometheus/prometheus.yml](/Users/myrzanizimbetov/Desktop/liquid-lms/monitoring/prometheus/prometheus.yml)
+- [monitoring/prometheus/alert_rules.yml](/Users/myrzanizimbetov/Desktop/liquid-lms/monitoring/prometheus/alert_rules.yml)
 
-- `POST /api/assignments/:id/submissions`
-- `GET /api/assignments/:id/submissions`
-- `GET /api/submissions/me`
-- `PATCH /api/submissions/:id`
+Grafana provisioning:
 
-**Reviews**
+- datasource provisioning
+- dashboard provisioning
+- `Liquid LMS Overview` dashboard JSON
 
-- `GET /api/courses/:id/reviews`
-- `POST /api/courses/:id/reviews`
-- `DELETE /api/reviews/:id`
+Dashboard covers:
 
-### **8. Frontend Screens**
+- traffic
+- 5xx error rate
+- request latency
+- CPU, memory, disk
+- enrollment SLI
+- submission latency SLI
+- backend health
 
-- Landing page
-- Login / Register
-- Course Catalog
-- Course Detail (modules, assignments, reviews, enroll)
-- My Courses (student enrollments)
-- Assignment Detail (submit)
-- My Submissions
-- Instructor Hub
-- Instructor Course Create/Edit
-- Instructor Assignments
-- Instructor Submissions (grading)
+## Alerts
 
-### **9. Testing & Validation**
+Implemented alerts:
 
-- Manual testing of all API endpoints via Swagger and curl script
-- Verified authentication and role‑based access
-- Verified enroll, submit, grade, and review workflows
-- Confirmed CORS behavior in production
+- `LiquidLMSHighSubmissionLatency`
+  - warning
+  - triggers when p95 submission latency stays above 2 seconds for 5 minutes
+- `LiquidLMSBackendDown`
+  - critical
+  - triggers when the backend target is down for 1 minute
 
-### **Test Scenarios**
+Manual alert validation:
 
-- Student login → enroll course → submit assignment
-- Instructor login → create course → create assignment → grade submission
-- Reviews created and reflected in course ratings
-- Enrollment stats updated on enroll/unenroll
+```bash
+docker compose stop backend
+curl -s http://127.0.0.1:9091/api/v1/alerts
+docker compose start backend
+```
 
-### **10. Deployment Notes**
+For Swarm:
 
-- Frontend deployed as Static Site (Vite build output `/dist`)
-- Backend deployed as Web Service with environment variables
-- CORS configured with `CLIENT_ORIGIN`
-- `SameSite=None` for cookies in production
+```bash
+docker service scale liquid-lms_backend=0
+curl -s http://127.0.0.1:9091/api/v1/alerts
+docker service scale liquid-lms_backend=2
+```
 
-### **11. Limitations**
+## Environment
 
-- No file upload support
-- No analytics charts
-- Lesson content editing is basic
-- No password recovery
+Backend example env file:
 
-### **12. Future Improvements**
+- [backend/.env.example](/Users/myrzanizimbetov/Desktop/liquid-lms/backend/.env.example)
 
-- File uploads for submissions and resources
-- Instructor dashboards with analytics
-- Student certificates on completion
-- Real‑time notifications
+Frontend example env file:
 
-### **13. Repository & Demo**
+- [client/.env.example](/Users/myrzanizimbetov/Desktop/liquid-lms/client/.env.example)
 
-- GitHub: [`https://github.com/nurzhqn0/liquid-lms`](https://github.com/nurzhqn0/liquid-lms)
-- Frontend URL: [`https://sea-turtle-app-ufci5.ondigitalocean.app`](https://sea-turtle-app-ufci5.ondigitalocean.app)
-- Backend URL: [`https://sea-turtle-app-ufci5.ondigitalocean.app/api`](https://sea-turtle-app-ufci5.ondigitalocean.app/api)
+Key backend variables:
 
----
+- `PORT`
+- `MONGO_URI`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `CLIENT_ORIGIN`
+- `COOKIE_SECURE`
+
+Key frontend variables:
+
+- `VITE_API_BASE_URL`
+- `VITE_SITE_URL`
+
+## Midterm Deliverables Covered by This Repo
+
+- frontend and backend Dockerfiles
+- Docker Compose stack
+- Docker Swarm stack file
+- Prometheus scraping and alert rules
+- Grafana dashboard provisioning
+- backend health and metrics endpoints
+- business-oriented SLI metrics for the LMS

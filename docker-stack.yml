@@ -1,0 +1,82 @@
+services:
+  frontend:
+    image: liquid-lms-frontend:latest
+    ports:
+      - target: 80
+        published: 8080
+        protocol: tcp
+        mode: ingress
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  backend:
+    image: liquid-lms-backend:latest
+    environment:
+      PORT: 4000
+      MONGO_URI: mongodb://mongo:27017/liquid_lms
+      JWT_SECRET: liquid-lms-midterm-demo-secret
+      JWT_EXPIRES_IN: 7d
+      CLIENT_ORIGIN: http://localhost:8080
+      COOKIE_SECURE: "false"
+    ports:
+      - target: 4000
+        published: 4000
+        protocol: tcp
+        mode: ingress
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+    ports:
+      - target: 9090
+        published: 9091
+        protocol: tcp
+        mode: ingress
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - target: 3000
+        published: 3001
+        protocol: tcp
+        mode: ingress
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+    ports:
+      - target: 9100
+        published: 9100
+        protocol: tcp
+        mode: ingress
+
+volumes:
+  mongo_data:
+  grafana_data:
