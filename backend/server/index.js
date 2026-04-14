@@ -4,7 +4,8 @@ const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const env = require("./config/env");
 const { swaggerSpec } = require("./config/swagger");
-const { connectDb } = require("./db");
+const { connectDb, getDbStatus } = require("./db");
+const { register, metricsMiddleware } = require("./observability/metrics");
 const authRoutes = require("./routes/auth");
 const courseRoutes = require("./routes/courses");
 const enrollmentRoutes = require("./routes/enrollments");
@@ -29,6 +30,7 @@ function getAllowedOrigins() {
   return Array.from(origins);
 }
 
+app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
@@ -50,8 +52,30 @@ app.use(
 
 const head = "";
 
+app.get("/metrics", async (req, res, next) => {
+  try {
+    res.set("Content-Type", register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.use(metricsMiddleware);
+
 app.get("/health", (req, res) => {
-  res.json({ ok: true });
+  const db = getDbStatus();
+  const ok = db.ready;
+
+  res.status(ok ? 200 : 503).json({
+    ok,
+    service: "liquid-lms-backend",
+    uptime_seconds: Math.round(process.uptime()),
+    database: {
+      status: db.status,
+      ready_state: db.readyState
+    }
+  });
 });
 
 app.use(`${head}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));

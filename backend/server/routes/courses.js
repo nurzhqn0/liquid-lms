@@ -4,6 +4,7 @@ const Course = require("../models/Course");
 const Enrollment = require("../models/Enrollment");
 const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
+const { recordBusinessOperation } = require("../observability/metrics");
 const {
   computeModuleStats,
   updateCourseEnrollmentStats
@@ -134,6 +135,8 @@ router.patch("/:id", auth, requireRole("instructor"), async (req, res, next) => 
 });
 
 router.post("/:id/enroll", auth, requireRole("student"), async (req, res, next) => {
+  let eligibleForSli = false;
+
   try {
     const { id } = req.params;
     if (!isValidObjectId(id)) {
@@ -154,6 +157,8 @@ router.post("/:id/enroll", auth, requireRole("student"), async (req, res, next) 
       return res.status(409).json({ error: "Already enrolled" });
     }
 
+    eligibleForSli = true;
+
     const enrollment = await Enrollment.create({
       ...req.body,
       user_id: req.user._id,
@@ -168,8 +173,12 @@ router.post("/:id/enroll", auth, requireRole("student"), async (req, res, next) 
     });
 
     await updateCourseEnrollmentStats(id);
+    recordBusinessOperation("enrollment", "success");
     return res.status(201).json({ enrollment });
   } catch (err) {
+    if (eligibleForSli && err.code !== 11000) {
+      recordBusinessOperation("enrollment", "failure");
+    }
     if (err.code === 11000) {
       return res.status(409).json({ error: "Already enrolled" });
     }

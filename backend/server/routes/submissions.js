@@ -6,6 +6,7 @@ const Submission = require("../models/Submission");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
+const { recordBusinessOperation } = require("../observability/metrics");
 
 const router = express.Router();
 
@@ -28,6 +29,8 @@ async function recomputeAssignmentStats(assignmentId) {
 }
 
 router.post("/assignments/:id/submissions", auth, requireRole("student"), async (req, res, next) => {
+  let eligibleForSli = false;
+
   try {
     const { id } = req.params;
     if (!isValidObjectId(id)) {
@@ -38,6 +41,8 @@ router.post("/assignments/:id/submissions", auth, requireRole("student"), async 
     if (!assignment) {
       return res.status(404).json({ error: "Assignment not found" });
     }
+
+    eligibleForSli = true;
 
     const enrollment = await Enrollment.findOne({
       user_id: req.user._id,
@@ -64,8 +69,12 @@ router.post("/assignments/:id/submissions", auth, requireRole("student"), async 
 
     const submission = await Submission.create(payload);
     await recomputeAssignmentStats(assignment._id);
+    recordBusinessOperation("submission", "success");
     return res.status(201).json({ submission });
   } catch (err) {
+    if (eligibleForSli) {
+      recordBusinessOperation("submission", "failure");
+    }
     return next(err);
   }
 });

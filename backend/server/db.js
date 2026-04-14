@@ -9,4 +9,20 @@ async function connectDb() {
   console.log("Connected to MongoDB");
 }
 
-module.exports = { connectDb };
+function getDbStatus() {
+  const states = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting"
+  };
+  const readyState = mongoose.connection.readyState;
+
+  return {
+    ready: readyState === 1,
+    readyState,
+    status: states[readyState] || "unknown"
+  };
+}
+
+module.exports = { connectDb, getDbStatus };

@@ -8,7 +8,11 @@ const env = {
   jwtSecret: process.env.JWT_SECRET || "change-me",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
-  enrollmentsCollection: process.env.ENROLLMENTS_COLLECTION || "enrollments"
+  enrollmentsCollection: process.env.ENROLLMENTS_COLLECTION || "enrollments",
+  cookieSecure:
+    process.env.COOKIE_SECURE === undefined
+      ? process.env.NODE_ENV === "production"
+      : process.env.COOKIE_SECURE === "true"
 };
 
 if (!env.mongoUri) {

@@ -1,9 +1,11 @@
+const env = require("../config/env");
+
 function getAuthCookieOptions() {
-  const isProd = process.env.NODE_ENV === "production";
+  const secure = env.cookieSecure;
   return {
     httpOnly: true,
-    sameSite: isProd ? "none" : "lax",
-    secure: isProd,
+    sameSite: secure ? "none" : "lax",
+    secure,
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000
   };
